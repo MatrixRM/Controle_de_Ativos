@@ -139,3 +139,18 @@ GitHub.sublime-settings
 !.vscode/launch.json
 !.vscode/extensions.json
 .history
+
+# opencode #
+.opencode/
+opencode.json
+
+# Windows #
+Thumbs.db
+Desktop.ini
+*.lnk
+
+# Temp #
+*.tmp
+*.swp
+*.swo
+*~
