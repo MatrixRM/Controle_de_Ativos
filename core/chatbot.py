@@ -581,7 +581,7 @@ def _executar_criar_usuario_ad(texto):
 
     login = _gerar_login_ad(nome, sobrenome)
     nome_display = f"{nome} {sobrenome}".strip()
-    senha = "Hoje#2026"
+    senha = settings.AD_DEFAULT_PASSWORD or "Altere@2026"
 
     ps_cmd = (
         f"New-ADUser "

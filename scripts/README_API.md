@@ -77,7 +77,7 @@ Authorization: Token SUA_CHAVE_AQUI
 2. Adicione ou edite a linha:
 
 ```
-INVENTORY_TOKEN=57d8f3a9-1b2c-4e5f-8a7b-9c0d1e2f3a4b
+INVENTORY_TOKEN=SEU_TOKEN_AQUI
 ```
 
 3. Reinicie o servidor Django para aplicar a mudança.
@@ -95,7 +95,7 @@ O script `sync_ativos.ps1` fica na pasta `scripts/` do projeto.
 | Parâmetro | Padrão | Descrição |
 |-----------|--------|-----------|
 | `ApiUrl` | `http://SEU_SERVER:8000/api/ativos/sync/` | URL do endpoint |
-| `Token` | `57d8f3a9-1b2c-4e5f-8a7b-9c0d1e2f3a4b` | Token de autenticação |
+| `Token` | `SEU_TOKEN_AQUI` | Token de autenticação |
 | `TimeoutSegundos` | `30` | Timeout da requisição HTTP |
 | `LogPath` | `C:\Inventario\sync_ativos.log` | Caminho do arquivo de log |
 

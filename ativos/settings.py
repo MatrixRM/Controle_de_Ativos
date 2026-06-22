@@ -79,3 +79,4 @@ LOGOUT_REDIRECT_URL = 'login'
 
 INVENTORY_TOKEN = config('INVENTORY_TOKEN', default='change-me-in-production')
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+AD_DEFAULT_PASSWORD = config('AD_DEFAULT_PASSWORD', default='')
