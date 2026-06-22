@@ -1,0 +1,177 @@
+{% extends 'core/base.html' %}{% load ui_tags %}
+{% block title %}Relatório de Estoque — Controle de Ativos{% endblock %}
+{% block page_title %}Relatório de Estoque{% endblock %}
+
+{% block topbar_actions %}
+<div style="display:flex;gap:8px">
+  <a href="?{% if request.META.QUERY_STRING %}{{ request.META.QUERY_STRING }}&{% endif %}export=1" class="btn-primary-custom">
+    <i class="bi bi-download"></i> Exportar CSV
+  </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<form method="GET" class="filter-bar">
+  <div class="search-input-wrap">
+    <i class="bi bi-search"></i>
+    <input type="text" name="busca" class="form-control-custom" placeholder="Buscar por nome..." value="{{ busca }}">
+  </div>
+  <select name="categoria" class="form-control-custom filter-select">
+    <option value="">Todas as categorias</option>
+    {% for key, label in categorias %}
+    <option value="{{ key }}" {% if filtro_categoria == key %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <input type="text" name="localizacao" class="form-control-custom filter-select" placeholder="Localização" value="{{ filtro_localizacao }}">
+  <button type="submit" class="btn-primary-custom"><i class="bi bi-funnel"></i> Filtrar</button>
+</form>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <div class="kpi-card__label">Total (filtro)</div>
+      <div class="kpi-card__value">{{ total_itens }}</div>
+      <div class="kpi-card__meta">de {{ total_geral }} itens</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <div class="kpi-card__label">Categorias</div>
+      <div class="kpi-card__value">{{ total_categorias }}</div>
+      <div class="kpi-card__meta">{{ por_categoria|length }} com itens</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <div class="kpi-card__label">Estoque Baixo</div>
+      <div class="kpi-card__value" style="color:#dc2626">{{ itens_abaixo_minimo|length }}</div>
+      <div class="kpi-card__meta">itens abaixo do mínimo</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <div class="kpi-card__label">Total Unidades</div>
+      <div class="kpi-card__value">{{ qs|length }}</div>
+      <div class="kpi-card__meta">itens diferentes</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header-custom">
+        <span style="font-size:13px;font-weight:600;">Distribuição por Categoria</span>
+      </div>
+      <div class="card-body-custom">
+        <canvas id="chartCategoria" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header-custom">
+        <span style="font-size:13px;font-weight:600;">Saúde do Estoque</span>
+      </div>
+      <div class="card-body-custom">
+        <canvas id="chartSaude" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body-custom p-0">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Categoria</th>
+          <th>Quantidade</th>
+          <th>Mínimo</th>
+          <th>Unidade</th>
+          <th>Localização</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in qs %}
+        {% row_class item.quantidade item.quantidade_minima as rclass %}
+        <tr{% if rclass %} class="{{ rclass }}"{% endif %}>
+          <td style="font-weight:500">{{ item.nome }}</td>
+          <td class="muted">{{ item.get_categoria_display }}</td>
+          <td><span class="{% stock_alert_class item.quantidade item.quantidade_minima %}">{{ item.quantidade }}</span></td>
+          <td class="muted">{{ item.quantidade_minima }}</td>
+          <td class="muted">{{ item.unidade }}</td>
+          <td class="muted">{{ item.localizacao|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6"><div class="empty-state"><i class="bi bi-box-seam"></i><p>Nenhum item encontrado.</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+  const catLabels = {
+    'MEMORIA': 'Memória', 'HD_SSD': 'HD / SSD', 'FONTE': 'Fonte',
+    'TECLADO': 'Teclado', 'MOUSE': 'Mouse', 'CABO': 'Cabo',
+    'TONER': 'Toner', 'OUTRO': 'Outro',
+  };
+  const colors = [
+    '#3b82f6','#22c55e','#eab308','#ef4444','#8b5cf6',
+    '#f97316','#06b6d4','#94a3b8',
+  ];
+  const porCategoria = {{ por_categoria|safe }};
+  if (document.getElementById('chartCategoria')) {
+    new Chart(document.getElementById('chartCategoria'), {
+      type: 'bar',
+      data: {
+        labels: porCategoria.map(c => catLabels[c.categoria] || c.categoria),
+        datasets: [{
+          data: porCategoria.map(c => c.total),
+          backgroundColor: colors.slice(0, porCategoria.length),
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        indexAxis: 'y',
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { stepSize: 1 } },
+          y: { ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  const qs = {{ qs|length }};
+  const alerta = {{ itens_abaixo_minimo|length }};
+  const ok = qs - alerta;
+  if (document.getElementById('chartSaude') && qs > 0) {
+    new Chart(document.getElementById('chartSaude'), {
+      type: 'doughnut',
+      data: {
+        labels: ['OK', 'Abaixo do mínimo'],
+        datasets: [{
+          data: [ok, alerta],
+          backgroundColor: ['#22c55e', '#ef4444'],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 12 } } }
+        }
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

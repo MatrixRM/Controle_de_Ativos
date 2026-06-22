@@ -1,0 +1,34 @@
+{% extends 'core/base.html' %}
+{% block title %}{% if editando %}Editar{% else %}Nova{% endif %} Empresa — Controle de Ativos{% endblock %}
+{% block page_title %}{% if editando %}Editar Empresa{% else %}Nova Empresa{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px;">
+  <div class="card-body-custom">
+    <form method="POST" novalidate>
+      {% csrf_token %}
+
+      <div class="row g-3 mb-3">
+        <div class="col-12">
+          <div class="form-group-custom">
+            <label for="{{ form.nome.id_for_label }}" class="form-label-custom">{{ form.nome.label }}</label>
+            {{ form.nome }}
+            {% if form.nome.errors %}<div class="form-error">{{ form.nome.errors.0 }}</div>{% endif %}
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="form-group-custom">
+            <label for="{{ form.segmento.id_for_label }}" class="form-label-custom">{{ form.segmento.label }}</label>
+            {{ form.segmento }}
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid var(--card-border); padding-top: 20px;">
+        <a href="{% url 'listar-empresas' %}" class="btn-secondary-custom"><i class="bi bi-x-lg"></i> Cancelar</a>
+        <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'core/base.html' %}{% load ui_tags %}
+{% block title %}Movimentações — Controle de Ativos{% endblock %}
+{% block page_title %}Histórico de Movimentações{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'criar-movimentacao' %}" class="btn-primary-custom">
+  <i class="bi bi-plus-lg"></i> Nova Movimentação
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-body-custom p-0">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Data / Hora</th>
+          <th>Item</th>
+          <th>Tipo</th>
+          <th>Quantidade</th>
+          <th>Empresa Origem</th>
+          <th>Empresa Destino</th>
+          <th>Responsável</th>
+          <th>Equipamento</th>
+          <th>Observação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for mov in movimentacoes %}
+        <tr>
+          <td class="muted" style="white-space: nowrap;">{{ mov.data|date:"d/m/Y H:i" }}</td>
+          <td style="font-weight: 500;">{{ mov.item.nome }}</td>
+          <td><span class="badge-status {{ mov.tipo|movimentacao_tipo_class }}">{{ mov.tipo|movimentacao_tipo_label }}</span></td>
+          <td style="font-weight: 600;">{{ mov.quantidade }}</td>
+          <td class="muted">{{ mov.empresa_origem.nome|default:"—" }}</td>
+          <td class="muted">{{ mov.empresa_destino.nome|default:"—" }}</td>
+          <td class="muted">{{ mov.responsavel|user_display_name|default:"—" }}</td>
+          <td class="muted">
+            {% if mov.equipamento %}
+            <a href="{% url 'detalhe-equipamento' mov.equipamento.pk %}" style="color: var(--accent);">{{ mov.equipamento.numero_imobilizado }}</a>
+            {% else %}—{% endif %}
+          </td>
+          <td class="muted" style="max-width: 150px;"><span class="text-truncate">{{ mov.observacao|default:"—" }}</span></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9">
+            <div class="empty-state">
+              <i class="bi bi-arrow-left-right"></i>
+              <p>Nenhuma movimentação registrada.</p>
+              <a href="{% url 'criar-movimentacao' %}" class="btn-primary-custom"><i class="bi bi-plus-lg"></i> Nova Movimentação</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<div style="display: flex; justify-content: center; margin-top: 20px;">
+  <div class="pagination-custom">
+    {% if page_obj.has_previous %}
+    <a href="?page=1"><i class="bi bi-chevron-double-left"></i></a>
+    <a href="?page={{ page_obj.previous_page_number }}"><i class="bi bi-chevron-left"></i></a>
+    {% endif %}
+    <span class="active">{{ page_obj.number }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}"><i class="bi bi-chevron-right"></i></a>
+    <a href="?page={{ page_obj.paginator.num_pages }}"><i class="bi bi-chevron-double-right"></i></a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,158 @@
+{% extends 'core/base.html' %}{% load ui_tags %}
+{% block title %}Notificações — Controle de Ativos{% endblock %}
+{% block page_title %}Notificações{% endblock %}
+
+{% block content %}
+
+<div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;">
+  <div style="font-size: 12px; color: var(--text-muted); background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 8px 14px;">
+    <strong style="color: var(--text-primary);">{{ page_obj.paginator.count }}</strong> notificação(ões)
+  </div>
+  <div style="font-size: 12px; color: var(--text-muted); background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 8px 14px;">
+    <strong style="color: #dc2626;">{{ notificacoes_nao_lidas|default:0 }}</strong> não lida(s)
+  </div>
+  <button type="button" id="marcar-todas-btn" class="btn-secondary-custom" style="margin-left: auto;">
+    <i class="bi bi-check-all"></i> Marcar todas como lidas
+  </button>
+</div>
+
+<form method="GET" class="filter-bar">
+  <select name="tipo" class="form-control-custom filter-select">
+    <option value="">Todos os tipos</option>
+    {% for key, label in tipos %}
+    <option value="{{ key }}" {% if filtro_tipo == key %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn-primary-custom"><i class="bi bi-funnel"></i> Filtrar</button>
+</form>
+
+<div class="card">
+  <div class="card-body-custom p-0">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Mensagem</th>
+          <th>Data</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for n in notificacoes %}
+        <tr class="notificacao-row {% if not n.lida %}notificacao--nao-lida{% endif %}" data-id="{{ n.pk }}">
+          <td>
+            <span class="badge-tipo notificacao-tipo-{{ n.tipo|lower }}">{{ n.get_tipo_display }}</span>
+          </td>
+          <td>
+            {% if n.link %}
+            <a href="{{ n.link }}" style="color: var(--text-primary); text-decoration: none;">{{ n.mensagem }}</a>
+            {% else %}
+            <span style="color: var(--text-primary);">{{ n.mensagem }}</span>
+            {% endif %}
+          </td>
+          <td class="muted">{{ n.criado_em|date:"d/m/Y H:i" }}</td>
+          <td>
+            {% if n.lida %}
+            <span class="badge-status badge-status--concluida">Lida</span>
+            {% else %}
+            <span class="badge-status badge-status--aberta">Não lida</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4">
+            <div class="empty-state">
+              <i class="bi bi-bell"></i>
+              <p>Nenhuma notificação encontrada.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<div style="display: flex; justify-content: center; margin-top: 20px;">
+  <div class="pagination-custom">
+    {% if page_obj.has_previous %}
+    <a href="?page=1{% if filtro_tipo %}&tipo={{ filtro_tipo }}{% endif %}"><i class="bi bi-chevron-double-left"></i></a>
+    <a href="?page={{ page_obj.previous_page_number }}{% if filtro_tipo %}&tipo={{ filtro_tipo }}{% endif %}"><i class="bi bi-chevron-left"></i></a>
+    {% endif %}
+    <span class="active">{{ page_obj.number }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if filtro_tipo %}&tipo={{ filtro_tipo }}{% endif %}"><i class="bi bi-chevron-right"></i></a>
+    <a href="?page={{ page_obj.paginator.num_pages }}{% if filtro_tipo %}&tipo={{ filtro_tipo }}{% endif %}"><i class="bi bi-chevron-double-right"></i></a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<style>
+.notificacao--nao-lida {
+  background: rgba(59, 130, 246, 0.04);
+}
+.notificacao--nao-lida:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+.notificacao-tipo-estoque_baixo {
+  background: #dc2626;
+  color: #fff;
+}
+.notificacao-tipo-garantia_proxima {
+  background: #f59e0b;
+  color: #fff;
+}
+.notificacao-tipo-manutencao_atrasada {
+  background: #ef4444;
+  color: #fff;
+}
+.notificacao-tipo-info {
+  background: #6b7280;
+  color: #fff;
+}
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  function getCookie(name) {
+    let cookie = document.cookie.split('; ').find(row => row.startsWith(name + '='));
+    return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
+  }
+  var csrftoken = getCookie('csrftoken');
+
+  document.getElementById('marcar-todas-btn').addEventListener('click', function() {
+    fetch('{% url "listar-notificacoes" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken
+      },
+      body: JSON.stringify({marcar_todas: true})
+    }).then(function(r) { return r.json(); }).then(function(data) {
+      if (data.ok) location.reload();
+    });
+  });
+
+  document.querySelectorAll('.notificacao-row').forEach(function(row) {
+    row.addEventListener('click', function() {
+      var id = this.dataset.id;
+      if (!id) return;
+      var link = this.querySelector('td a');
+      if (link) window.location.href = link.href;
+      fetch('{% url "listar-notificacoes" %}', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({id: parseInt(id)})
+      });
+    });
+  });
+});
+</script>
+{% endblock %}

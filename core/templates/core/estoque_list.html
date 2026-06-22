@@ -1,0 +1,102 @@
+{% extends 'core/base.html' %}{% load ui_tags %}
+{% block title %}Estoque — Controle de Ativos{% endblock %}
+{% block page_title %}Estoque de Peças e Acessórios{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'criar-movimentacao' %}" class="btn-secondary-custom">
+  <i class="bi bi-arrow-left-right"></i> Movimentar
+</a>
+<a href="{% url 'criar-item-estoque' %}" class="btn-primary-custom">
+  <i class="bi bi-plus-lg"></i> Novo Item
+</a>
+{% endblock %}
+
+{% block content %}
+{% if itens_abaixo_minimo %}
+<div class="alert-strip">
+  <i class="bi bi-exclamation-triangle"></i>
+  <span><strong>{{ itens_abaixo_minimo|length }} item(ns)</strong> com estoque abaixo do mínimo recomendado.</span>
+</div>
+{% endif %}
+
+<div style="display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap;">
+  <div style="font-size: 12px; color: var(--text-muted); background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 8px 14px;">
+    <strong style="color: var(--text-primary);">{{ itens|length }}</strong> itens cadastrados
+  </div>
+  <div style="font-size: 12px; color: var(--text-muted); background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 8px 14px;">
+    <strong style="color: #dc2626;">{{ itens_abaixo_minimo|length }}</strong> itens em alerta
+  </div>
+</div>
+
+<form method="GET" class="filter-bar">
+  <div class="search-input-wrap">
+    <i class="bi bi-search"></i>
+    <input type="text" name="busca" class="form-control-custom" placeholder="Buscar por nome..." value="{{ busca }}">
+  </div>
+  <select name="categoria" class="form-control-custom filter-select">
+    <option value="">Todas as categorias</option>
+    {% for key, label in categorias %}
+    <option value="{{ key }}" {% if filtro_categoria == key %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn-primary-custom"><i class="bi bi-funnel"></i> Filtrar</button>
+</form>
+
+<div class="card">
+  <div class="card-body-custom p-0">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Categoria</th>
+          <th>Quantidade</th>
+          <th>Mínimo</th>
+          <th>Unidade</th>
+          <th>Localização</th>
+          <th style="width: 40px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in itens %}
+        {% row_class item.quantidade item.quantidade_minima as rclass %}
+        <tr{% if rclass %} class="{{ rclass }}"{% endif %}>
+          <td style="font-weight: 500;">{{ item.nome }}</td>
+          <td class="muted">{{ item.get_categoria_display }}</td>
+          <td><span class="{% stock_alert_class item.quantidade item.quantidade_minima %}">{{ item.quantidade }}</span></td>
+          <td class="muted">{{ item.quantidade_minima }}</td>
+          <td class="muted">{{ item.unidade }}</td>
+          <td class="muted">{{ item.localizacao|default:"—" }}</td>
+          <td><a href="{% url 'editar-item-estoque' item.pk %}" class="action-icon action-icon--edit"><i class="bi bi-pencil"></i></a></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <i class="bi bi-box-seam"></i>
+              <p>Nenhum item encontrado.</p>
+              <a href="{% url 'criar-item-estoque' %}" class="btn-primary-custom"><i class="bi bi-plus-lg"></i> Adicionar item</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<div style="display: flex; justify-content: center; margin-top: 20px;">
+  <div class="pagination-custom">
+    {% if page_obj.has_previous %}
+    <a href="?page=1{% if busca %}&busca={{ busca }}{% endif %}{% if filtro_categoria %}&categoria={{ filtro_categoria }}{% endif %}"><i class="bi bi-chevron-double-left"></i></a>
+    <a href="?page={{ page_obj.previous_page_number }}{% if busca %}&busca={{ busca }}{% endif %}{% if filtro_categoria %}&categoria={{ filtro_categoria }}{% endif %}"><i class="bi bi-chevron-left"></i></a>
+    {% endif %}
+    <span class="active">{{ page_obj.number }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if busca %}&busca={{ busca }}{% endif %}{% if filtro_categoria %}&categoria={{ filtro_categoria }}{% endif %}"><i class="bi bi-chevron-right"></i></a>
+    <a href="?page={{ page_obj.paginator.num_pages }}{% if busca %}&busca={{ busca }}{% endif %}{% if filtro_categoria %}&categoria={{ filtro_categoria }}{% endif %}"><i class="bi bi-chevron-double-right"></i></a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

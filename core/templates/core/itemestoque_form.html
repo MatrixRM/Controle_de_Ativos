@@ -1,0 +1,67 @@
+{% extends 'core/base.html' %}
+{% block title %}{% if editando %}Editar{% else %}Novo{% endif %} Item de Estoque — Controle de Ativos{% endblock %}
+{% block page_title %}{% if editando %}Editar Item{% else %}Novo Item{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px;">
+  <div class="card-body-custom">
+    <form method="POST" novalidate>
+      {% csrf_token %}
+
+      <div class="form-section-title">Dados do Item</div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <div class="form-group-custom">
+            <label for="{{ form.nome.id_for_label }}" class="form-label-custom">{{ form.nome.label }}</label>
+            {{ form.nome }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group-custom">
+            <label for="{{ form.categoria.id_for_label }}" class="form-label-custom">{{ form.categoria.label }}</label>
+            {{ form.categoria }}
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group-custom">
+            <label for="{{ form.quantidade.id_for_label }}" class="form-label-custom">{{ form.quantidade.label }}</label>
+            {{ form.quantidade }}
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group-custom">
+            <label for="{{ form.quantidade_minima.id_for_label }}" class="form-label-custom">{{ form.quantidade_minima.label }}</label>
+            {{ form.quantidade_minima }}
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="form-group-custom">
+            <label for="{{ form.unidade.id_for_label }}" class="form-label-custom">{{ form.unidade.label }}</label>
+            {{ form.unidade }}
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group-custom">
+            <label for="{{ form.localizacao.id_for_label }}" class="form-label-custom">{{ form.localizacao.label }}</label>
+            {{ form.localizacao }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section-title">Observações</div>
+      <div class="row g-3 mb-4">
+        <div class="col-12">
+          <div class="form-group-custom">
+            {{ form.observacoes }}
+          </div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; justify-content: flex-end; border-top: 1px solid var(--card-border); padding-top: 20px;">
+        <a href="{% url 'listar-estoque' %}" class="btn-secondary-custom"><i class="bi bi-x-lg"></i> Cancelar</a>
+        <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

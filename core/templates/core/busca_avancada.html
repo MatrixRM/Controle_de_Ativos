@@ -1,0 +1,134 @@
+{% extends 'core/base.html' %}{% load ui_tags %}
+{% block title %}Busca — Controle de Ativos{% endblock %}
+{% block page_title %}Busca Avançada{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom:20px">
+  <div class="card-body-custom">
+    <form method="GET" class="filter-bar" style="margin-bottom:0">
+      <div class="search-input-wrap" style="flex:2">
+        <i class="bi bi-search"></i>
+        <input type="text" name="q" class="form-control-custom" placeholder="Buscar por imobilizado, serial, IP, MAC, TeamViewer, modelo, marca, SO, observações..." value="{{ q }}">
+      </div>
+      <select name="campo" class="form-control-custom filter-select">
+        <option value="">Todos os campos</option>
+        <option value="numero_imobilizado" {% if campo == 'numero_imobilizado' %}selected{% endif %}>Nº Imobilizado</option>
+        <option value="numero_serie" {% if campo == 'numero_serie' %}selected{% endif %}>Nº Série</option>
+        <option value="modelo" {% if campo == 'modelo' %}selected{% endif %}>Modelo</option>
+        <option value="marca" {% if campo == 'marca' %}selected{% endif %}>Marca</option>
+        <option value="ip" {% if campo == 'ip' %}selected{% endif %}>IP</option>
+        <option value="mac_ethernet" {% if campo == 'mac_ethernet' %}selected{% endif %}>MAC Ethernet</option>
+        <option value="mac_wifi" {% if campo == 'mac_wifi' %}selected{% endif %}>MAC Wi-Fi</option>
+        <option value="teamviewer_id" {% if campo == 'teamviewer_id' %}selected{% endif %}>TeamViewer ID</option>
+        <option value="sistema_operacional" {% if campo == 'sistema_operacional' %}selected{% endif %}>Sistema Operacional</option>
+        <option value="observacoes" {% if campo == 'observacoes' %}selected{% endif %}>Observações</option>
+      </select>
+      <button type="submit" class="btn-primary-custom"><i class="bi bi-search"></i> Buscar</button>
+
+      <button type="button" class="btn-secondary-custom btn-sm-custom" onclick="toggleFiltros()" style="cursor:pointer">
+        <i class="bi bi-funnel"></i> Filtros
+      </button>
+    </form>
+
+    <div id="filtros-avancados" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--card-border)">
+      <div class="filter-bar" style="margin-bottom:0">
+        <select name="tipo" class="form-control-custom filter-select">
+          <option value="">Todos os tipos</option>
+          {% for key, label in tipos %}
+          <option value="{{ key }}" {% if filtro_tipo == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <select name="status" class="form-control-custom filter-select">
+          <option value="">Todos os status</option>
+          {% for key, label in status_list %}
+          <option value="{{ key }}" {% if filtro_status == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        <select name="empresa" class="form-control-custom filter-select">
+          <option value="">Todas as empresas</option>
+          {% for e in empresas %}
+          <option value="{{ e.pk }}" {% if filtro_empresa|stringformat:"s" == e.pk|stringformat:"s" %}selected{% endif %}>{{ e.nome }}</option>
+          {% endfor %}
+        </select>
+        <input type="text" name="setor" class="form-control-custom filter-select" placeholder="Setor" value="{{ filtro_setor }}">
+        <button type="submit" class="btn-primary-custom btn-sm-custom"><i class="bi bi-funnel"></i> Aplicar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if q or filtro_tipo or filtro_status or filtro_setor or filtro_empresa %}
+<div style="margin-bottom:16px">
+  <span style="font-size:13px;color:var(--text-muted)">
+    <strong>{{ total_resultados }}</strong> resultado{{ total_resultados|pluralize:'s' }} encontrado{{ total_resultados|pluralize:'s' }}
+  </span>
+</div>
+
+<div class="card">
+  <div class="card-body-custom p-0">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Nº Imob.</th>
+          <th>Tipo</th>
+          <th>Marca / Modelo</th>
+          <th>IP / TeamViewer</th>
+          <th>Setor / Empresa</th>
+          <th>Status</th>
+          <th style="width:70px">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for eq in equipamentos %}
+        <tr>
+          <td><a href="{% url 'detalhe-equipamento' eq.pk %}" style="color:var(--accent);font-weight:500;">{{ eq.numero_imobilizado }}</a></td>
+          <td><span class="badge-tipo"><i class="bi {{ eq.tipo|equipamento_icon }}"></i> {{ eq.get_tipo_display }}</span></td>
+          <td>{{ eq.marca }} {{ eq.modelo }}<br><span class="muted" style="font-size:12px">{{ eq.numero_serie }}</span></td>
+          <td class="muted" style="font-size:12px">{{ eq.ip|default:"—" }}<br>TV: {{ eq.teamviewer_id|default:"—" }}</td>
+          <td class="muted" style="font-size:12px">{{ eq.setor }}<br>{{ eq.empresa.nome|default:"—" }}</td>
+          <td><span class="badge-status {{ eq.status|status_badge_class }}">{{ eq.status|status_label }}</span></td>
+          <td>
+            <div class="table-actions">
+              <a href="{% url 'detalhe-equipamento' eq.pk %}" class="action-icon action-icon--view" title="Detalhes"><i class="bi bi-eye"></i></a>
+              <a href="{% url 'editar-equipamento' eq.pk %}" class="action-icon action-icon--edit" title="Editar"><i class="bi bi-pencil"></i></a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7"><div class="empty-state"><i class="bi bi-search"></i><p>Nenhum resultado para esta busca.</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;">
+  <span style="font-size:13px;color:var(--text-muted)">
+    Exibindo {{ page_obj.start_index|default:0 }}–{{ page_obj.end_index|default:0 }} de {{ paginator.count|default:0 }}
+  </span>
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="pagination-custom">
+    {% if page_obj.has_previous %}
+    <a href="?q={{ q }}&page={{ page_obj.previous_page_number }}{% if filtro_tipo %}&tipo={{ filtro_tipo }}{% endif %}{% if filtro_status %}&status={{ filtro_status }}{% endif %}{% if filtro_empresa %}&empresa={{ filtro_empresa }}{% endif %}{% if filtro_setor %}&setor={{ filtro_setor }}{% endif %}{% if campo %}&campo={{ campo }}{% endif %}"><i class="bi bi-chevron-left"></i></a>
+    {% endif %}
+    <span class="active">{{ page_obj.number }}</span>
+    {% if page_obj.has_next %}
+    <a href="?q={{ q }}&page={{ page_obj.next_page_number }}{% if filtro_tipo %}&tipo={{ filtro_tipo }}{% endif %}{% if filtro_status %}&status={{ filtro_status }}{% endif %}{% if filtro_empresa %}&empresa={{ filtro_empresa }}{% endif %}{% if filtro_setor %}&setor={{ filtro_setor }}{% endif %}{% if campo %}&campo={{ campo }}{% endif %}"><i class="bi bi-chevron-right"></i></a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleFiltros() {
+  const el = document.getElementById('filtros-avancados');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+{% if filtro_tipo or filtro_status or filtro_setor or filtro_empresa %}
+document.getElementById('filtros-avancados').style.display = 'block';
+{% endif %}
+</script>
+{% endblock %}

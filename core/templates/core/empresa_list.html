@@ -1,0 +1,75 @@
+{% extends 'core/base.html' %}
+{% block title %}Empresas — Controle de Ativos{% endblock %}
+{% block page_title %}Empresas{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'criar-empresa' %}" class="btn-primary-custom">
+  <i class="bi bi-plus-lg"></i> Nova Empresa
+</a>
+{% endblock %}
+
+{% block content %}
+<form method="GET" class="filter-bar">
+  <div class="search-input-wrap">
+    <i class="bi bi-search"></i>
+    <input type="text" name="busca" class="form-control-custom" placeholder="Buscar por razão social..." value="{{ busca }}">
+  </div>
+  <button type="submit" class="btn-primary-custom"><i class="bi bi-funnel"></i> Filtrar</button>
+</form>
+
+<div class="card">
+  <div class="card-body-custom p-0">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Razão Social</th>
+          <th>Segmento</th>
+          <th style="width: 90px;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for empresa in empresas %}
+        <tr>
+          <td style="font-weight: 500;">{{ empresa.nome }}</td>
+          <td><span class="badge-tipo">{{ empresa.get_segmento_display }}</span></td>
+          <td>
+            <div class="table-actions">
+              <a href="{% url 'editar-empresa' empresa.pk %}" class="action-icon action-icon--edit" title="Editar"><i class="bi bi-pencil"></i></a>
+              <a href="{% url 'excluir-empresa' empresa.pk %}" class="action-icon action-icon--delete" title="Excluir"><i class="bi bi-trash3"></i></a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3">
+            <div class="empty-state">
+              <i class="bi bi-building"></i>
+              <p>Nenhuma empresa cadastrada.</p>
+              <a href="{% url 'criar-empresa' %}" class="btn-primary-custom"><i class="bi bi-plus-lg"></i> Adicionar empresa</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px;">
+  <span style="font-size: 13px; color: var(--text-muted);">Exibindo {{ page_obj.start_index|default:0 }}–{{ page_obj.end_index|default:0 }} de {{ paginator.count|default:0 }} empresas</span>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="pagination-custom">
+    {% if page_obj.has_previous %}
+    <a href="?page=1{% if busca %}&busca={{ busca }}{% endif %}"><i class="bi bi-chevron-double-left"></i></a>
+    <a href="?page={{ page_obj.previous_page_number }}{% if busca %}&busca={{ busca }}{% endif %}"><i class="bi bi-chevron-left"></i></a>
+    {% endif %}
+    <span class="active">{{ page_obj.number }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if busca %}&busca={{ busca }}{% endif %}"><i class="bi bi-chevron-right"></i></a>
+    <a href="?page={{ page_obj.paginator.num_pages }}{% if busca %}&busca={{ busca }}{% endif %}"><i class="bi bi-chevron-double-right"></i></a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

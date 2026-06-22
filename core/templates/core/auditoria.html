@@ -1,0 +1,77 @@
+{% extends 'core/base.html' %}
+{% block title %}Auditoria — Controle de Ativos{% endblock %}
+{% block page_title %}Auditoria de Alterações{% endblock %}
+
+{% block content %}
+<form method="GET" class="filter-bar">
+  <div class="search-input-wrap">
+    <i class="bi bi-search"></i>
+    <input type="text" name="busca" class="form-control-custom" placeholder="Buscar por ID, campo, valores..." value="{{ busca }}">
+  </div>
+  <select name="tabela" class="form-control-custom filter-select">
+    <option value="">Todas as tabelas</option>
+    {% for t in tabelas %}
+    <option value="{{ t }}" {% if filtro_tabela == t %}selected{% endif %}>{{ t }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn-primary-custom"><i class="bi bi-funnel"></i> Filtrar</button>
+</form>
+
+<div class="card">
+  <div class="card-body-custom p-0">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Tabela</th>
+          <th>ID</th>
+          <th>Campo</th>
+          <th>Valor Anterior</th>
+          <th>Valor Novo</th>
+          <th>Usuário</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td class="muted" style="white-space: nowrap;">{{ log.data|date:"d/m/Y H:i" }}</td>
+          <td>{{ log.tabela }}</td>
+          <td>{{ log.registro_id }}</td>
+          <td>{{ log.campo }}</td>
+          <td class="muted" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ log.valor_anterior|truncatechars:100 }}</td>
+          <td class="muted" style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ log.valor_novo|truncatechars:100 }}</td>
+          <td class="muted">{% if log.usuario %}{{ log.usuario.get_full_name|default:log.usuario.username }}{% else %}—{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <i class="bi bi-clock-history"></i>
+              <p>Nenhum registro de alteração encontrado.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px;">
+  <span style="font-size: 13px; color: var(--text-muted);">Exibindo {{ page_obj.start_index|default:0 }}–{{ page_obj.end_index|default:0 }} de {{ paginator.count|default:0 }} registros</span>
+
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="pagination-custom">
+    {% if page_obj.has_previous %}
+    <a href="?page=1{% if busca %}&busca={{ busca }}{% endif %}{% if filtro_tabela %}&tabela={{ filtro_tabela }}{% endif %}"><i class="bi bi-chevron-double-left"></i></a>
+    <a href="?page={{ page_obj.previous_page_number }}{% if busca %}&busca={{ busca }}{% endif %}{% if filtro_tabela %}&tabela={{ filtro_tabela }}{% endif %}"><i class="bi bi-chevron-left"></i></a>
+    {% endif %}
+    <span class="active">{{ page_obj.number }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if busca %}&busca={{ busca }}{% endif %}{% if filtro_tabela %}&tabela={{ filtro_tabela }}{% endif %}"><i class="bi bi-chevron-right"></i></a>
+    <a href="?page={{ page_obj.paginator.num_pages }}{% if busca %}&busca={{ busca }}{% endif %}{% if filtro_tabela %}&tabela={{ filtro_tabela }}{% endif %}"><i class="bi bi-chevron-double-right"></i></a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

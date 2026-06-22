@@ -1,0 +1,40 @@
+{% extends 'core/base.html' %}{% load ui_tags %}
+{% block title %}Excluir Equipamento — Controle de Ativos{% endblock %}
+{% block page_title %}Excluir Equipamento{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card" style="border-color: #fecaca;">
+      <div class="card-body-custom" style="text-align: center; padding: 32px;">
+        <div style="width: 48px; height: 48px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;">
+          <i class="bi bi-trash3" style="font-size: 20px; color: #dc2626;"></i>
+        </div>
+        <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">Confirmar Exclusão</h3>
+        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 20px;">
+          Tem certeza que deseja excluir o equipamento abaixo? Esta ação não pode ser desfeita.
+        </p>
+
+        <div style="background: #f8fafc; border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: left;">
+          <div class="detail-field">
+            <div class="detail-field__label">Nº Imobilizado</div>
+            <div class="detail-field__value" style="font-weight: 600;">{{ equipamento.numero_imobilizado }}</div>
+          </div>
+          <div class="detail-field" style="margin-bottom: 0;">
+            <div class="detail-field__label">Equipamento</div>
+            <div class="detail-field__value">{{ equipamento.get_tipo_display }} — {{ equipamento.marca }} {{ equipamento.modelo }}</div>
+          </div>
+        </div>
+
+        <form method="POST">
+          {% csrf_token %}
+          <div style="display: flex; gap: 8px; justify-content: center;">
+            <a href="{% url 'detalhe-equipamento' equipamento.pk %}" class="btn-secondary-custom"><i class="bi bi-x-lg"></i> Cancelar</a>
+            <button type="submit" class="btn-danger-custom"><i class="bi bi-trash3"></i> Confirmar Exclusão</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

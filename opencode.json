@@ -1,0 +1,10 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "diagnostics": {
+      "type": "remote",
+      "url": "http://diagnostics-server:8000/mcp",
+      "enabled": true
+    }
+  }
+}

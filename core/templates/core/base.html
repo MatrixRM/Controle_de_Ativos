@@ -1,0 +1,152 @@
+<!DOCTYPE html>{% load static %}
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Controle de Ativos{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{% static 'core/css/app.css' %}">
+</head>
+<body>
+  <div class="app-wrapper">
+
+    <header class="topbar">
+      <button class="topbar__toggle" id="sidebar-toggle" aria-label="Menu">
+        <i class="bi bi-list"></i>
+      </button>
+      <div class="topbar__breadcrumb">
+        <span class="topbar__page-title">{% block page_title %}Dashboard{% endblock %}</span>
+      </div>
+      <div class="topbar__search">
+        <form method="GET" action="{% url 'busca-avancada' %}">
+          <i class="bi bi-search"></i>
+          <input type="text" name="q" class="topbar__search-input" placeholder="Buscar equipamentos..." value="{{ request.GET.q|default:'' }}">
+        </form>
+      </div>
+      <div class="topbar__actions">
+        {% block topbar_actions %}{% endblock %}
+        <button class="topbar__icon-btn" id="theme-toggle" aria-label="Alternar tema">
+          <i class="bi bi-moon-fill"></i>
+        </button>
+        <div class="topbar__notifications">
+          <a href="{% url 'listar-notificacoes' %}" class="topbar__icon-btn" aria-label="Notificações">
+            <i class="bi bi-bell"></i>
+            {% if notificacoes_nao_lidas or alertas_estoque %}<span class="topbar__badge">{{ notificacoes_nao_lidas|add:alertas_estoque }}</span>{% endif %}
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <div class="app-body">
+      <nav id="sidebar" class="sidebar sidebar--expanded">
+        <div class="sidebar__logo">
+          <img src="{% static 'core/img/logo.png' %}" alt="CA" class="sidebar__logo-icon">
+          <span class="sidebar__logo-text">Controle de Ativos</span>
+        </div>
+        <div class="sidebar__nav">
+          <div class="sidebar__section-label">Gestão</div>
+
+          <a href="{% url 'dashboard' %}" class="sidebar__item {% if request.resolver_match.url_name == 'dashboard' %}sidebar__item--active{% endif %}">
+            <i class="bi bi-speedometer2 sidebar__icon"></i>
+            <span class="sidebar__label">Dashboard</span>
+          </a>
+          <a href="{% url 'listar-equipamentos' %}" class="sidebar__item {% if 'equipamento' in request.resolver_match.url_name %}sidebar__item--active{% endif %}">
+            <i class="bi bi-pc-display sidebar__icon"></i>
+            <span class="sidebar__label">Equipamentos</span>
+          </a>
+          <a href="{% url 'listar-empresas' %}" class="sidebar__item {% if 'empresa' in request.resolver_match.url_name %}sidebar__item--active{% endif %}">
+            <i class="bi bi-building sidebar__icon"></i>
+            <span class="sidebar__label">Empresas</span>
+          </a>
+          <a href="{% url 'listar-manutencoes' %}" class="sidebar__item {% if 'manutencao' in request.resolver_match.url_name %}sidebar__item--active{% endif %}">
+            <i class="bi bi-tools sidebar__icon"></i>
+            <span class="sidebar__label">Manutenções</span>
+          </a>
+          <a href="{% url 'listar-estoque' %}" class="sidebar__item {% if 'estoque' in request.resolver_match.url_name or 'item' in request.resolver_match.url_name or 'movimentacao' in request.resolver_match.url_name %}sidebar__item--active{% endif %}">
+            <i class="bi bi-box-seam sidebar__icon"></i>
+            <span class="sidebar__label">Estoque</span>
+          </a>
+
+          <div class="sidebar__divider"></div>
+          <div class="sidebar__section-label">Relatórios</div>
+
+          <a href="{% url 'relatorio-equipamentos' %}" class="sidebar__item {% if request.resolver_match.url_name == 'relatorio-equipamentos' %}sidebar__item--active{% endif %}">
+            <i class="bi bi-bar-chart-line sidebar__icon"></i>
+            <span class="sidebar__label">Equipamentos</span>
+          </a>
+          <a href="{% url 'relatorio-estoque' %}" class="sidebar__item {% if request.resolver_match.url_name == 'relatorio-estoque' %}sidebar__item--active{% endif %}">
+            <i class="bi bi-box-seam sidebar__icon"></i>
+            <span class="sidebar__label">Estoque</span>
+          </a>
+
+          <div class="sidebar__divider"></div>
+          <div class="sidebar__section-label">Ferramentas</div>
+
+          <a href="{% url 'chatbot' %}" class="sidebar__item {% if request.resolver_match.url_name == 'chatbot' %}sidebar__item--active{% endif %}">
+            <i class="bi bi-robot sidebar__icon"></i>
+            <span class="sidebar__label">Assistente IA</span>
+          </a>
+
+          <div class="sidebar__divider"></div>
+          <div class="sidebar__section-label">Sistema</div>
+
+          <a href="{% url 'auditoria' %}" class="sidebar__item {% if request.resolver_match.url_name == 'auditoria' %}sidebar__item--active{% endif %}">
+            <i class="bi bi-clock-history sidebar__icon"></i>
+            <span class="sidebar__label">Auditoria</span>
+          </a>
+          <a href="/admin/auth/user/" class="sidebar__item">
+            <i class="bi bi-people sidebar__icon"></i>
+            <span class="sidebar__label">Usuários</span>
+          </a>
+          <a href="/admin/" class="sidebar__item">
+            <i class="bi bi-gear sidebar__icon"></i>
+            <span class="sidebar__label">Admin</span>
+          </a>
+        </div>
+
+        <div class="sidebar__footer">
+          <div class="sidebar__user">
+            <div class="sidebar__avatar">{{ request.user.username|first|upper }}</div>
+            <div class="sidebar__user-info">
+              <span class="sidebar__user-name">{{ request.user.get_full_name|default:request.user.username }}</span>
+              <span class="sidebar__user-role">{% if request.user.is_superuser %}Administrador{% else %}Técnico{% endif %}</span>
+            </div>
+          </div>
+          <form method="POST" action="{% url 'logout' %}" style="display: contents;">
+            {% csrf_token %}
+            <button type="submit" class="sidebar__logout" title="Sair">
+              <i class="bi bi-box-arrow-right"></i>
+            </button>
+          </form>
+        </div>
+      </nav>
+
+      <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+      <main id="main-content" class="main-content">
+        {% if messages %}
+        <div class="message-container">
+          {% for message in messages %}
+          <div class="alert-custom alert-dismissible-custom alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+            <i class="bi {% if message.tags == 'success' %}bi-check-circle{% elif message.tags == 'error' %}bi-exclamation-triangle{% elif message.tags == 'warning' %}bi-exclamation-triangle{% else %}bi-info-circle{% endif %}"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="{% static 'core/js/app.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

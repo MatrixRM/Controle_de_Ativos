@@ -1,0 +1,205 @@
+{% extends 'core/base.html' %}{% load static ui_tags %}
+{% block title %}Relatório de Equipamentos — Controle de Ativos{% endblock %}
+{% block page_title %}Relatório de Equipamentos{% endblock %}
+
+{% block topbar_actions %}
+<div style="display:flex;gap:8px">
+  <a href="?{% if request.META.QUERY_STRING %}{{ request.META.QUERY_STRING }}&{% endif %}export=1" class="btn-primary-custom">
+    <i class="bi bi-download"></i> Exportar CSV
+  </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<form method="GET" class="filter-bar">
+  <div class="search-input-wrap">
+    <i class="bi bi-search"></i>
+    <input type="text" name="busca" class="form-control-custom" placeholder="Buscar..." value="{{ busca }}">
+  </div>
+  <select name="tipo" class="form-control-custom filter-select">
+    <option value="">Todos os tipos</option>
+    {% for key, label in tipos %}
+    <option value="{{ key }}" {% if filtro_tipo == key %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <select name="status" class="form-control-custom filter-select">
+    <option value="">Todos os status</option>
+    {% for key, label in status_list %}
+    <option value="{{ key }}" {% if filtro_status == key %}selected{% endif %}>{{ label }}</option>
+    {% endfor %}
+  </select>
+  <input type="text" name="setor" class="form-control-custom filter-select" placeholder="Setor" value="{{ filtro_setor }}">
+  <select name="empresa" class="form-control-custom filter-select">
+    <option value="">Todas as empresas</option>
+    {% for e in empresas %}
+    <option value="{{ e.pk }}" {% if filtro_empresa|stringformat:"s" == e.pk|stringformat:"s" %}selected{% endif %}>{{ e.nome }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn-primary-custom"><i class="bi bi-funnel"></i> Filtrar</button>
+</form>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <div class="kpi-card__label">Total (filtro)</div>
+      <div class="kpi-card__value">{{ total_filtrado }}</div>
+      <div class="kpi-card__meta">de {{ total_geral }} equipamentos</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <div class="kpi-card__label">Tipos</div>
+      <div class="kpi-card__value">{{ por_tipo|length }}</div>
+      <div class="kpi-card__meta">categorias diferentes</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <div class="kpi-card__label">Status</div>
+      <div class="kpi-card__value">{{ por_status|length }}</div>
+      <div class="kpi-card__meta">status diferentes</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <div class="kpi-card__label">Empresas</div>
+      <div class="kpi-card__value">{{ por_empresa|length }}</div>
+      <div class="kpi-card__meta">com equipamentos</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header-custom">
+        <span style="font-size:13px;font-weight:600;">Distribuição por Status</span>
+      </div>
+      <div class="card-body-custom">
+        <canvas id="chartStatus" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header-custom">
+        <span style="font-size:13px;font-weight:600;">Distribuição por Tipo</span>
+      </div>
+      <div class="card-body-custom">
+        <canvas id="chartTipo" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body-custom p-0" style="overflow-x:auto">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Nº Imob.</th>
+          <th>Tipo</th>
+          <th>Marca / Modelo</th>
+          <th>Empresa</th>
+          <th>Setor</th>
+          <th>IP / TeamViewer</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for eq in qs %}
+        <tr>
+          <td><a href="{% url 'detalhe-equipamento' eq.pk %}" style="color:var(--accent);font-weight:500;">{{ eq.numero_imobilizado }}</a></td>
+          <td><span class="badge-tipo"><i class="bi {{ eq.tipo|equipamento_icon }}"></i> {{ eq.get_tipo_display }}</span></td>
+          <td>{{ eq.marca }} {{ eq.modelo }}</td>
+          <td class="muted">{{ eq.empresa.nome|default:"—" }}</td>
+          <td class="muted">{{ eq.setor }}</td>
+          <td class="muted" style="font-size:12px">{{ eq.ip|default:"" }}{% if eq.teamviewer_id %}<br>TV: {{ eq.teamviewer_id }}{% endif %}</td>
+          <td><span class="badge-status {{ eq.status|status_badge_class }}">{{ eq.status|status_label }}</span></td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7"><div class="empty-state"><i class="bi bi-pc-display"></i><p>Nenhum equipamento encontrado.</p></div></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if total_filtrado > 500 %}
+  <div style="padding:12px 20px;font-size:12px;color:var(--text-muted);border-top:1px solid var(--card-border);">
+    Exibindo 500 de {{ total_filtrado }} equipamentos. Use filtros para refinar ou exporte CSV para ver todos.
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+  const statusLabels = {
+    'ATIVO': 'Ativo', 'OFFLINE': 'Offline', 'EM_MANUTENCAO': 'Manutenção',
+    'EMPRESTADO': 'Emprestado', 'ESTOQUE': 'Estoque', 'DESCARTADO': 'Descartado',
+  };
+  const statusColors = {
+    'ATIVO': '#22c55e', 'OFFLINE': '#94a3b8', 'EM_MANUTENCAO': '#eab308',
+    'EMPRESTADO': '#3b82f6', 'ESTOQUE': '#64748b', 'DESCARTADO': '#ef4444',
+  };
+
+  const porStatus = {{ por_status|safe }};
+  if (document.getElementById('chartStatus')) {
+    new Chart(document.getElementById('chartStatus'), {
+      type: 'doughnut',
+      data: {
+        labels: porStatus.map(s => statusLabels[s.status] || s.status),
+        datasets: [{
+          data: porStatus.map(s => s.total),
+          backgroundColor: porStatus.map(s => statusColors[s.status] || '#94a3b8'),
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 12, padding: 12, font: { size: 12 } } }
+        }
+      }
+    });
+  }
+
+  const tipoLabels = {
+    'DESKTOP': 'Desktop', 'NOTEBOOK': 'Notebook', 'MONITOR': 'Monitor',
+    'IMPRESSORA': 'Impressora', 'SCANNER': 'Scanner', 'NOBREAK': 'Nobreak',
+    'SWITCH': 'Switch', 'ROTEADOR': 'Roteador', 'TELEFONE_IP': 'Tel. IP',
+    'PROJETOR': 'Projetor', 'TABLET': 'Tablet', 'OUTRO': 'Outro',
+  };
+  const colors = [
+    '#3b82f6','#22c55e','#eab308','#ef4444','#8b5cf6','#f97316',
+    '#06b6d4','#ec4899','#10b981','#6366f1','#d946ef','#94a3b8',
+  ];
+  const porTipo = {{ por_tipo|safe }};
+  if (document.getElementById('chartTipo')) {
+    new Chart(document.getElementById('chartTipo'), {
+      type: 'bar',
+      data: {
+        labels: porTipo.map(t => tipoLabels[t.tipo] || t.tipo),
+        datasets: [{
+          data: porTipo.map(t => t.total),
+          backgroundColor: colors.slice(0, porTipo.length),
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: { ticks: { stepSize: 1 } },
+          y: { ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

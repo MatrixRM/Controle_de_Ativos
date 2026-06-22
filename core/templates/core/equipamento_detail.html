@@ -1,0 +1,236 @@
+{% extends 'core/base.html' %}{% load ui_tags %}
+{% block title %}{{ equipamento.numero_imobilizado }} — Equipamentos{% endblock %}
+{% block page_title %}Equipamento {{ equipamento.numero_imobilizado }}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'editar-equipamento' equipamento.pk %}" class="btn-secondary-custom">
+  <i class="bi bi-pencil"></i> Editar
+</a>
+<a href="{% url 'criar-manutencao-equipamento' equipamento.pk %}" class="btn-secondary-custom">
+  <i class="bi bi-calendar-check"></i> Preventiva
+</a>
+<a href="{% url 'criar-manutencao' %}?equipamento={{ equipamento.pk }}" class="btn-primary-custom">
+  <i class="bi bi-tools"></i> Nova Manutenção
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header-custom">
+        <span style="font-size: 13px; font-weight: 600;">Identificação</span>
+        <span class="badge-status {{ equipamento.status|status_badge_class }}">{{ equipamento.status|status_label }}</span>
+      </div>
+      <div class="card-body-custom">
+        <div class="detail-grid">
+          <div class="detail-field">
+            <div class="detail-field__label">Nº Imobilizado</div>
+            <div class="detail-field__value">{{ equipamento.numero_imobilizado }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Nº de Série</div>
+            <div class="detail-field__value muted">{{ equipamento.numero_serie|default:"—" }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Tipo</div>
+            <div class="detail-field__value"><span class="badge-tipo"><i class="bi {{ equipamento.tipo|equipamento_icon }}"></i> {{ equipamento.get_tipo_display }}</span></div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Marca</div>
+            <div class="detail-field__value">{{ equipamento.marca }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Modelo</div>
+            <div class="detail-field__value">{{ equipamento.modelo }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Empresa</div>
+            <div class="detail-field__value">{{ equipamento.empresa.nome|default:"—" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header-custom">
+        <span style="font-size: 13px; font-weight: 600;">Software</span>
+      </div>
+      <div class="card-body-custom">
+        <div class="detail-grid">
+          <div class="detail-field">
+            <div class="detail-field__label">Sistema Operacional</div>
+            <div class="detail-field__value muted">{{ equipamento.sistema_operacional|default:"—" }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Versão do SO</div>
+            <div class="detail-field__value muted">{{ equipamento.versao_so|default:"—" }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Versão Office</div>
+            <div class="detail-field__value muted">{{ equipamento.versao_office|default:"—" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header-custom">
+        <span style="font-size: 13px; font-weight: 600;">Localização</span>
+      </div>
+      <div class="card-body-custom">
+        <div class="detail-grid">
+          <div class="detail-field">
+            <div class="detail-field__label">Local</div>
+            <div class="detail-field__value">{{ equipamento.local }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Setor</div>
+            <div class="detail-field__value">{{ equipamento.setor }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Responsável</div>
+            <div class="detail-field__value">{{ equipamento.responsavel|default:"—" }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Último Usuário</div>
+            <div class="detail-field__value">{{ equipamento.ultimo_usuario|default:"—" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header-custom">
+        <span style="font-size: 13px; font-weight: 600;">Rede</span>
+      </div>
+      <div class="card-body-custom">
+        <div class="detail-grid">
+          <div class="detail-field">
+            <div class="detail-field__label">IP</div>
+            <div class="detail-field__value muted">{{ equipamento.ip|default:"—" }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">MAC Ethernet</div>
+            <div class="detail-field__value muted">{{ equipamento.mac_ethernet|default:"—" }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">MAC Wi-Fi</div>
+            <div class="detail-field__value muted">{{ equipamento.mac_wifi|default:"—" }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">TeamViewer ID</div>
+            <div class="detail-field__value muted">{{ equipamento.teamviewer_id|default:"—" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header-custom">
+        <span style="font-size: 13px; font-weight: 600;">Financeiro</span>
+      </div>
+      <div class="card-body-custom">
+        <div class="detail-grid">
+          <div class="detail-field">
+            <div class="detail-field__label">Data de Aquisição</div>
+            <div class="detail-field__value muted">{{ equipamento.data_aquisicao|date:"d/m/Y"|default:"—" }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Valor</div>
+            <div class="detail-field__value muted">{% if equipamento.valor_aquisicao %}R$ {{ equipamento.valor_aquisicao|floatformat:2 }}{% else %}—{% endif %}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Garantia até</div>
+            <div class="detail-field__value muted">{{ equipamento.garantia_ate|date:"d/m/Y"|default:"—" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if equipamento.periodicidade_dias or equipamento.proxima_manutencao %}
+    <div class="card mb-3">
+      <div class="card-header-custom">
+        <span style="font-size: 13px; font-weight: 600;">Manutenção Preventiva</span>
+      </div>
+      <div class="card-body-custom">
+        <div class="detail-grid">
+          <div class="detail-field">
+            <div class="detail-field__label">Periodicidade</div>
+            <div class="detail-field__value muted">{% if equipamento.periodicidade_dias %}{{ equipamento.periodicidade_dias }} dias{% else %}—{% endif %}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Próxima Manutenção</div>
+            <div class="detail-field__value muted">{{ equipamento.proxima_manutencao|date:"d/m/Y"|default:"—" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if equipamento.observacoes %}
+<div class="card mb-3">
+  <div class="card-header-custom">
+    <span style="font-size: 13px; font-weight: 600;">Observações</span>
+  </div>
+  <div class="card-body-custom">
+    <div style="font-size: 14px; color: var(--text-primary); line-height: 1.6;">{{ equipamento.observacoes|linebreaks }}</div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="card-header-custom">
+    <span style="font-size: 13px; font-weight: 600;">Histórico de Manutenções</span>
+    <a href="{% url 'criar-manutencao' %}?equipamento={{ equipamento.pk }}" class="btn-primary-custom btn-sm-custom">
+      <i class="bi bi-plus-lg"></i> Nova
+    </a>
+  </div>
+  <div class="card-body-custom p-0">
+    {% if manutencoes %}
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Data</th>
+          <th>Tipo</th>
+          <th>Técnico</th>
+          <th>Status</th>
+          <th>Custo</th>
+          <th style="width: 40px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for m in manutencoes %}
+        <tr>
+          <td class="muted">{{ m.id }}</td>
+          <td>{{ m.data_abertura|date:"d/m/Y" }}</td>
+          <td>{{ m.get_tipo_display }}</td>
+          <td class="muted">{{ m.tecnico|user_display_name|default:"—" }}</td>
+          <td><span class="badge-status {{ m.status|manutencao_status_class }}">{{ m.status|manutencao_status_label }}</span></td>
+          <td class="muted">{% if m.custo %}R$ {{ m.custo|floatformat:2 }}{% else %}—{% endif %}</td>
+          <td><a href="{% url 'editar-manutencao' m.pk %}" class="action-icon action-icon--edit"><i class="bi bi-pencil"></i></a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state" style="padding: 32px;">
+      <i class="bi bi-tools"></i>
+      <p>Nenhuma manutenção registrada para este equipamento.</p>
+      <a href="{% url 'criar-manutencao' %}?equipamento={{ equipamento.pk }}" class="btn-primary-custom btn-sm-custom">
+        <i class="bi bi-plus-lg"></i> Registrar manutenção
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div style="margin-top: 20px;">
+  <a href="{% url 'listar-equipamentos' %}" class="btn-secondary-custom"><i class="bi bi-arrow-left"></i> Voltar</a>
+</div>
+{% endblock %}

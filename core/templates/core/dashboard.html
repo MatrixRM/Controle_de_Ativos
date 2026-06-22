@@ -1,0 +1,131 @@
+{% extends 'core/base.html' %}{% load ui_tags %}
+{% block title %}Dashboard — Controle de Ativos{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+{% if itens_abaixo_minimo %}
+<div class="alert-strip">
+  <i class="bi bi-exclamation-triangle"></i>
+  <span><strong>{{ itens_abaixo_minimo|length }} item(ns)</strong> com estoque abaixo do mínimo.
+  <a href="{% url 'listar-estoque' %}">Ver estoque</a></span>
+</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <div class="kpi-card__label">Total de Equipamentos</div>
+      <div class="kpi-card__value">{{ total_equipamentos }}</div>
+      <div class="kpi-card__meta">
+        <span class="kpi-card__dot" style="background: #22c55e;"></span>
+        {{ total_ativos }} ativos
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <div class="kpi-card__label">Em Manutenção</div>
+      <div class="kpi-card__value">{{ total_manutencao }}</div>
+      <div class="kpi-card__meta">
+        <span class="kpi-card__dot" style="background: #eab308;"></span>
+        {{ manutencoes_abertas }} manutenções abertas
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <div class="kpi-card__label">Emprestados</div>
+      <div class="kpi-card__value">{{ total_emprestado }}</div>
+      <div class="kpi-card__meta">
+        <span class="kpi-card__dot" style="background: #3b82f6;"></span>
+        equipamentos emprestados
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="kpi-card">
+      <div class="kpi-card__label">Empresas</div>
+      <div class="kpi-card__value">{{ total_empresas }}</div>
+      <div class="kpi-card__meta">
+        <span class="kpi-card__dot" style="background: #8b5cf6;"></span>
+        empresas cadastradas
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header-custom">
+        <span style="font-size: 13px; font-weight: 600;">Últimos Equipamentos</span>
+        <a href="{% url 'listar-equipamentos' %}" class="btn-ghost-custom btn-sm-custom">Ver todos</a>
+      </div>
+      <div class="card-body-custom p-0">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Nº Imob.</th>
+              <th>Modelo / Últ. Usuário</th>
+              <th>Setor</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for eq in equipamentos|slice:":5" %}
+            <tr>
+              <td><a href="{% url 'detalhe-equipamento' eq.pk %}" style="color: var(--accent); font-weight: 500;">{{ eq.numero_imobilizado }}</a></td>
+              <td>{{ eq.marca }} {{ eq.modelo }}<br><span class="muted" style="font-size: 12px; color: var(--text-muted);">{{ eq.ultimo_usuario|default:"—" }}</span></td>
+              <td class="muted">{{ eq.setor }}</td>
+              <td><span class="badge-status {{ eq.status|status_badge_class }}">{{ eq.status|status_label }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" style="padding: 24px; text-align: center; color: var(--text-muted);">Nenhum equipamento registrado.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header-custom">
+        <span style="font-size: 13px; font-weight: 600;">Manutenções Abertas</span>
+        <a href="{% url 'listar-manutencoes' %}" class="btn-ghost-custom btn-sm-custom">Ver todas</a>
+      </div>
+      <div class="card-body-custom p-0">
+        <table class="table-custom">
+          <thead>
+            <tr>
+              <th>Equipamento</th>
+              <th>Tipo</th>
+              <th>Data</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in ultimas_manutencoes %}
+            <tr>
+              <td><a href="{% url 'detalhe-equipamento' m.equipamento.pk %}" style="color: var(--accent);">{{ m.equipamento.numero_imobilizado }}</a></td>
+              <td>{{ m.get_tipo_display }}</td>
+              <td class="muted">{{ m.data_abertura|date:"d/m/Y" }}</td>
+              <td><span class="badge-status {{ m.status|manutencao_status_class }}">{{ m.status|manutencao_status_label }}</span></td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" style="padding: 24px; text-align: center; color: var(--text-muted);">Nenhuma manutenção aberta.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if preventivas_pendentes %}
+<div class="alert-strip alert-strip-success">
+  <i class="bi bi-calendar-check"></i>
+  <span><strong>{{ preventivas_pendentes }} equipamento(s)</strong> com manutenção preventiva pendente.
+  <a href="{% url 'listar-equipamentos' %}">Ver equipamentos</a></span>
+</div>
+{% endif %}
+{% endblock %}
