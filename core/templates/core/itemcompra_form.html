@@ -1,0 +1,54 @@
+{% extends 'core/base.html' %}
+{% block title %}{% if editando %}Editar{% else %}Novo{% endif %} Item — {{ compra.numero_nf }}{% endblock %}
+{% block page_title %}{% if editando %}Editar Item{% else %}Novo Item{% endif %} — NF {{ compra.numero_nf }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 720px;">
+  <div class="card-body-custom">
+    <div style="background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 6px; padding: 8px 14px; margin-bottom: 20px; font-size: 13px; color: var(--text-muted);">
+      <strong>NF {{ compra.numero_nf }}</strong> — {{ compra.fornecedor_nome }} — {{ compra.data_compra|date:"d/m/Y" }}
+    </div>
+    <form method="POST">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label class="form-label">Equipamento (opcional — vincular ativo existente)</label>
+          {{ form.equipamento }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descrição</label>
+          {{ form.descricao }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nº de Série</label>
+          {{ form.numero_serie }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nº Patrimônio</label>
+          {{ form.patrimonio }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor Unitário (R$)</label>
+          {{ form.valor_unitario }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Quantidade</label>
+          {{ form.quantidade }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Garantia (meses)</label>
+          {{ form.meses_garantia }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Vida Útil (meses)</label>
+          {{ form.meses_vida_util }}
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 20px;">
+        <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Salvar</button>
+        <a href="{% url 'detalhe-compra' compra.pk %}" class="btn-secondary-custom"><i class="bi bi-x-lg"></i> Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

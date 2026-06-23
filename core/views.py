@@ -15,9 +15,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView, ListView, DetailView, CreateView, UpdateView, DeleteView
 
-from .forms import EmpresaForm, EquipamentoForm, ManutencaoForm, ItemEstoqueForm, MovimentacaoEstoqueForm
+from .forms import (CompraForm, EmpresaForm, EquipamentoForm, ItemCompraForm,
+                     ManutencaoForm, ItemEstoqueForm, MovimentacaoEstoqueForm)
 from .mapeamento_empresas import detectar_empresa_por_hostname
-from .models import Empresa, Equipamento, Manutencao, ItemEstoque, MovimentacaoEstoque, LogAlteracao, Notificacao
+from .models import (Compra, Empresa, Equipamento, ItemCompra, Manutencao,
+                     ItemEstoque, MovimentacaoEstoque, LogAlteracao, Notificacao)
 
 
 class LoginView(AuthLoginView):
@@ -122,12 +124,18 @@ class EquipamentoListView(LoginRequired, ListView):
     paginate_by = 20
 
     def get_queryset(self):
+        from datetime import date, timedelta
         qs = Equipamento.objects.select_related('empresa').all()
         tipo = self.request.GET.get('tipo')
         status = self.request.GET.get('status')
         setor = self.request.GET.get('setor')
         empresa = self.request.GET.get('empresa')
         busca = self.request.GET.get('busca')
+        garantia = self.request.GET.get('garantia')
+        depreciacao = self.request.GET.get('depreciacao')
+        fornecedor = self.request.GET.get('fornecedor')
+        compra_inicio = self.request.GET.get('compra_inicio')
+        compra_fim = self.request.GET.get('compra_fim')
 
         if tipo:
             qs = qs.filter(tipo=tipo)
@@ -145,6 +153,50 @@ class EquipamentoListView(LoginRequired, ListView):
                 Q(ultimo_usuario__icontains=busca) |
                 Q(numero_serie__icontains=busca)
             )
+
+        hoje = date.today()
+        itens_qs = ItemCompra.objects.all()
+
+        if garantia == 'em_garantia':
+            pks = list(itens_qs.filter(data_fim_garantia__gte=hoje).values_list('equipamento_id', flat=True))
+            qs = qs.filter(pk__in=pks)
+        elif garantia == 'fora_garantia':
+            pks = list(itens_qs.filter(data_fim_garantia__lt=hoje).values_list('equipamento_id', flat=True))
+            qs = qs.filter(pk__in=pks)
+        elif garantia == 'proximo_vencer':
+            pks = list(itens_qs.filter(
+                data_fim_garantia__gte=hoje,
+                data_fim_garantia__lte=hoje + timedelta(days=30),
+            ).values_list('equipamento_id', flat=True))
+            qs = qs.filter(pk__in=pks)
+
+        if depreciacao == 'depreciado':
+            pks = list(itens_qs.filter(data_fim_depreciacao__lt=hoje).values_list('equipamento_id', flat=True))
+            qs = qs.filter(pk__in=pks)
+        elif depreciacao == 'em_depreciacao':
+            pks = list(itens_qs.filter(data_fim_depreciacao__gte=hoje).values_list('equipamento_id', flat=True))
+            qs = qs.filter(pk__in=pks)
+
+        if fornecedor:
+            compra_ids = Compra.objects.filter(fornecedor_nome__icontains=fornecedor).values_list('id', flat=True)
+            pks = list(itens_qs.filter(compra_id__in=compra_ids).values_list('equipamento_id', flat=True))
+            qs = qs.filter(pk__in=pks)
+
+        if compra_inicio and compra_fim:
+            compra_ids = Compra.objects.filter(
+                data_compra__gte=compra_inicio, data_compra__lte=compra_fim,
+            ).values_list('id', flat=True)
+            pks = list(itens_qs.filter(compra_id__in=compra_ids).values_list('equipamento_id', flat=True))
+            qs = qs.filter(pk__in=pks)
+        elif compra_inicio:
+            compra_ids = Compra.objects.filter(data_compra__gte=compra_inicio).values_list('id', flat=True)
+            pks = list(itens_qs.filter(compra_id__in=compra_ids).values_list('equipamento_id', flat=True))
+            qs = qs.filter(pk__in=pks)
+        elif compra_fim:
+            compra_ids = Compra.objects.filter(data_compra__lte=compra_fim).values_list('id', flat=True)
+            pks = list(itens_qs.filter(compra_id__in=compra_ids).values_list('equipamento_id', flat=True))
+            qs = qs.filter(pk__in=pks)
+
         return qs
 
     def get_context_data(self, **kwargs):
@@ -157,6 +209,12 @@ class EquipamentoListView(LoginRequired, ListView):
         context['filtro_setor'] = self.request.GET.get('setor', '')
         context['filtro_empresa'] = self.request.GET.get('empresa', '')
         context['busca'] = self.request.GET.get('busca', '')
+        context['filtro_garantia'] = self.request.GET.get('garantia', '')
+        context['filtro_depreciacao'] = self.request.GET.get('depreciacao', '')
+        context['filtro_fornecedor'] = self.request.GET.get('fornecedor', '')
+        context['filtro_compra_inicio'] = self.request.GET.get('compra_inicio', '')
+        context['filtro_compra_fim'] = self.request.GET.get('compra_fim', '')
+        context['fornecedores'] = Compra.objects.values_list('fornecedor_nome', flat=True).distinct().order_by('fornecedor_nome')
         return context
 
 
@@ -168,6 +226,7 @@ class EquipamentoDetailView(LoginRequired, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['manutencoes'] = self.object.manutencoes.select_related('tecnico').all()
+        context['itens_compra'] = self.object.itens_compra.select_related('compra').all()
         return context
 
 
@@ -794,3 +853,138 @@ class RelatorioEquipamentosView(LoginRequired, TemplateView):
                 eq.versao_office, eq.observacoes,
             ])
         return response
+
+
+class CompraListView(LoginRequired, ListView):
+    model = Compra
+    template_name = 'core/compra_list.html'
+    context_object_name = 'compras'
+    paginate_by = 20
+
+    def get_queryset(self):
+        qs = Compra.objects.prefetch_related('itens').all()
+        busca = self.request.GET.get('busca')
+        fornecedor = self.request.GET.get('fornecedor')
+        data_inicio = self.request.GET.get('data_inicio')
+        data_fim = self.request.GET.get('data_fim')
+        if busca:
+            qs = qs.filter(
+                Q(numero_nf__icontains=busca) |
+                Q(fornecedor_nome__icontains=busca) |
+                Q(fornecedor_cnpj__icontains=busca)
+            )
+        if fornecedor:
+            qs = qs.filter(fornecedor_nome__icontains=fornecedor)
+        if data_inicio:
+            qs = qs.filter(data_compra__gte=data_inicio)
+        if data_fim:
+            qs = qs.filter(data_compra__lte=data_fim)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['busca'] = self.request.GET.get('busca', '')
+        context['filtro_fornecedor'] = self.request.GET.get('fornecedor', '')
+        context['filtro_data_inicio'] = self.request.GET.get('data_inicio', '')
+        context['filtro_data_fim'] = self.request.GET.get('data_fim', '')
+        context['fornecedores'] = Compra.objects.values_list('fornecedor_nome', flat=True).distinct().order_by('fornecedor_nome')
+        return context
+
+
+class CompraDetailView(LoginRequired, DetailView):
+    model = Compra
+    template_name = 'core/compra_detail.html'
+    context_object_name = 'compra'
+
+
+class CompraCreateView(LoginRequired, CreateView):
+    model = Compra
+    form_class = CompraForm
+    template_name = 'core/compra_form.html'
+    success_url = reverse_lazy('listar-compras')
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Compra cadastrada com sucesso!')
+        return super().form_valid(form)
+
+
+class CompraUpdateView(LoginRequired, UpdateView):
+    model = Compra
+    form_class = CompraForm
+    template_name = 'core/compra_form.html'
+    success_url = reverse_lazy('listar-compras')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editando'] = True
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Compra atualizada com sucesso!')
+        return super().form_valid(form)
+
+
+class CompraDeleteView(LoginRequired, DeleteView):
+    model = Compra
+    template_name = 'core/compra_confirm_delete.html'
+    success_url = reverse_lazy('listar-compras')
+    context_object_name = 'compra'
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Compra excluída com sucesso!')
+        return super().delete(request, *args, **kwargs)
+
+
+class ItemCompraCreateView(LoginRequired, CreateView):
+    model = ItemCompra
+    form_class = ItemCompraForm
+    template_name = 'core/itemcompra_form.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        self.compra = Compra.objects.get(pk=kwargs['pk'])
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.compra = self.compra
+        messages.success(self.request, 'Item adicionado com sucesso!')
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('detalhe-compra', kwargs={'pk': self.compra.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['compra'] = self.compra
+        return context
+
+
+class ItemCompraUpdateView(LoginRequired, UpdateView):
+    model = ItemCompra
+    form_class = ItemCompraForm
+    template_name = 'core/itemcompra_form.html'
+
+    def get_success_url(self):
+        return reverse_lazy('detalhe-compra', kwargs={'pk': self.object.compra.pk})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['editando'] = True
+        context['compra'] = self.object.compra
+        return context
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Item atualizado com sucesso!')
+        return super().form_valid(form)
+
+
+class ItemCompraDeleteView(LoginRequired, DeleteView):
+    model = ItemCompra
+    template_name = 'core/itemcompra_confirm_delete.html'
+    context_object_name = 'item'
+
+    def get_success_url(self):
+        return reverse_lazy('detalhe-compra', kwargs={'pk': self.object.compra.pk})
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Item excluído com sucesso!')
+        return super().delete(request, *args, **kwargs)

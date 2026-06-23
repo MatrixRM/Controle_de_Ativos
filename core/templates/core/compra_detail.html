@@ -1,0 +1,159 @@
+{% extends 'core/base.html' %}{% load ui_tags %}
+{% block title %}NF {{ compra.numero_nf }} — Compras{% endblock %}
+{% block page_title %}NF {{ compra.numero_nf }}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'criar-item-compra' compra.pk %}" class="btn-primary-custom">
+  <i class="bi bi-plus-lg"></i> Adicionar Item
+</a>
+<a href="{% url 'editar-compra' compra.pk %}" class="btn-secondary-custom">
+  <i class="bi bi-pencil"></i> Editar
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header-custom">
+        <span style="font-size: 13px; font-weight: 600;">Dados da Nota Fiscal</span>
+      </div>
+      <div class="card-body-custom">
+        <div class="detail-grid">
+          <div class="detail-field">
+            <div class="detail-field__label">Nº NF</div>
+            <div class="detail-field__value">{{ compra.numero_nf }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Série</div>
+            <div class="detail-field__value muted">{{ compra.serie|default:"—" }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Data</div>
+            <div class="detail-field__value">{{ compra.data_compra|date:"d/m/Y" }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Valor Total</div>
+            <div class="detail-field__value" style="font-weight: 600;">R$ {{ compra.valor_total|floatformat:2 }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Arquivo NF</div>
+            <div class="detail-field__value">
+              {% if compra.arquivo_nf %}
+              <a href="{{ compra.arquivo_nf.url }}" target="_blank" class="btn-secondary-custom btn-sm-custom"><i class="bi bi-download"></i> Download</a>
+              {% else %}—{% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header-custom">
+        <span style="font-size: 13px; font-weight: 600;">Fornecedor</span>
+      </div>
+      <div class="card-body-custom">
+        <div class="detail-grid">
+          <div class="detail-field">
+            <div class="detail-field__label">Nome</div>
+            <div class="detail-field__value">{{ compra.fornecedor_nome }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">CNPJ</div>
+            <div class="detail-field__value muted">{{ compra.fornecedor_cnpj|default:"—" }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if compra.observacoes %}
+    <div class="card mb-3">
+      <div class="card-header-custom">
+        <span style="font-size: 13px; font-weight: 600;">Observações</span>
+      </div>
+      <div class="card-body-custom">
+        <div style="font-size: 14px; color: var(--text-primary); line-height: 1.6;">{{ compra.observacoes|linebreaks }}</div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header-custom">
+    <span style="font-size: 13px; font-weight: 600;">Itens da Compra</span>
+    <a href="{% url 'criar-item-compra' compra.pk %}" class="btn-primary-custom btn-sm-custom">
+      <i class="bi bi-plus-lg"></i> Adicionar
+    </a>
+  </div>
+  <div class="card-body-custom p-0">
+    {% if compra.itens.exists %}
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>Descrição</th>
+          <th>Nº Série</th>
+          <th>Patrimônio</th>
+          <th>Valor Unit.</th>
+          <th>Qtd</th>
+          <th>Total</th>
+          <th>Garantia</th>
+          <th>Fim Garantia</th>
+          <th>Depreciação</th>
+          <th>Equipamento</th>
+          <th style="width: 40px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in compra.itens.all %}
+        <tr>
+          <td style="font-weight: 500;">{{ item.descricao }}</td>
+          <td class="muted">{{ item.numero_serie|default:"—" }}</td>
+          <td class="muted">{{ item.patrimonio|default:"—" }}</td>
+          <td>R$ {{ item.valor_unitario|floatformat:2 }}</td>
+          <td>{{ item.quantidade }}</td>
+          <td style="font-weight: 600;">R$ {{ item.valor_total_item|floatformat:2 }}</td>
+          <td>{% if item.meses_garantia %}{{ item.meses_garantia }} meses{% else %}—{% endif %}</td>
+          <td>
+            {% if item.data_fim_garantia %}
+            <span class="{% if item.status_garantia == 'Em Garantia' %}stock-ok{% else %}stock-alert{% endif %}">
+              {{ item.data_fim_garantia|date:"d/m/Y" }}
+            </span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if item.data_fim_depreciacao %}
+            <span class="{% if item.status_depreciacao == 'Em Depreciação' %}stock-ok{% else %}stock-alert{% endif %}">
+              {{ item.status_depreciacao }}
+            </span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if item.equipamento %}
+            <a href="{% url 'detalhe-equipamento' item.equipamento.pk %}" style="color: var(--accent);">{{ item.equipamento.numero_imobilizado }}</a>
+            {% else %}—{% endif %}
+          </td>
+          <td><a href="{% url 'editar-item-compra' item.pk %}" class="action-icon action-icon--edit"><i class="bi bi-pencil"></i></a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-cart"></i>
+      <p>Nenhum item nesta compra.</p>
+      <a href="{% url 'criar-item-compra' compra.pk %}" class="btn-primary-custom btn-sm-custom">
+        <i class="bi bi-plus-lg"></i> Adicionar Item
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div style="margin-top: 20px;">
+  <a href="{% url 'listar-compras' %}" class="btn-secondary-custom"><i class="bi bi-arrow-left"></i> Voltar</a>
+  <a href="{% url 'excluir-compra' compra.pk %}" class="btn-danger-custom" style="float: right;"><i class="bi bi-trash"></i> Excluir</a>
+</div>
+{% endblock %}

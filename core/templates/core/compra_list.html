@@ -1,0 +1,94 @@
+{% extends 'core/base.html' %}{% load ui_tags %}
+{% block title %}Compras — Controle de Ativos{% endblock %}
+{% block page_title %}Notas Fiscais / Compras{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'criar-compra' %}" class="btn-primary-custom">
+  <i class="bi bi-plus-lg"></i> Nova Compra
+</a>
+{% endblock %}
+
+{% block content %}
+<form method="GET" class="filter-bar">
+  <div class="search-input-wrap">
+    <i class="bi bi-search"></i>
+    <input type="text" name="busca" class="form-control-custom" placeholder="NF, fornecedor, CNPJ..." value="{{ busca }}">
+  </div>
+  <select name="fornecedor" class="form-control-custom filter-select">
+    <option value="">Todos os fornecedores</option>
+    {% for f in fornecedores %}
+    <option value="{{ f }}" {% if filtro_fornecedor == f %}selected{% endif %}>{{ f }}</option>
+    {% endfor %}
+  </select>
+  <input type="date" name="data_inicio" class="form-control-custom filter-select" value="{{ filtro_data_inicio }}" placeholder="Data início">
+  <input type="date" name="data_fim" class="form-control-custom filter-select" value="{{ filtro_data_fim }}" placeholder="Data fim">
+  <button type="submit" class="btn-primary-custom"><i class="bi bi-funnel"></i> Filtrar</button>
+</form>
+
+<div class="card">
+  <div class="card-body-custom p-0">
+    <table class="table-custom">
+      <thead>
+        <tr>
+          <th>NF</th>
+          <th>Série</th>
+          <th>Fornecedor</th>
+          <th>CNPJ</th>
+          <th>Data</th>
+          <th>Valor Total</th>
+          <th>Itens</th>
+          <th>NF Arquivo</th>
+          <th style="width: 40px;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for compra in compras %}
+        <tr>
+          <td style="font-weight: 500;">
+            <a href="{% url 'detalhe-compra' compra.pk %}" style="color: var(--accent);">{{ compra.numero_nf }}</a>
+          </td>
+          <td class="muted">{{ compra.serie|default:"—" }}</td>
+          <td>{{ compra.fornecedor_nome }}</td>
+          <td class="muted">{{ compra.fornecedor_cnpj|default:"—" }}</td>
+          <td class="muted">{{ compra.data_compra|date:"d/m/Y" }}</td>
+          <td style="font-weight: 600;">R$ {{ compra.valor_total|floatformat:2 }}</td>
+          <td class="muted">{{ compra.itens.count }}</td>
+          <td>
+            {% if compra.arquivo_nf %}
+            <a href="{{ compra.arquivo_nf.url }}" target="_blank" class="action-icon"><i class="bi bi-file-earmark-text"></i></a>
+            {% else %}—{% endif %}
+          </td>
+          <td><a href="{% url 'editar-compra' compra.pk %}" class="action-icon action-icon--edit"><i class="bi bi-pencil"></i></a></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9">
+            <div class="empty-state">
+              <i class="bi bi-receipt"></i>
+              <p>Nenhuma compra encontrada.</p>
+              <a href="{% url 'criar-compra' %}" class="btn-primary-custom"><i class="bi bi-plus-lg"></i> Nova Compra</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}
+<div style="display: flex; justify-content: center; margin-top: 20px;">
+  <div class="pagination-custom">
+    {% if page_obj.has_previous %}
+    <a href="?page=1{% if busca %}&busca={{ busca }}{% endif %}{% if filtro_fornecedor %}&fornecedor={{ filtro_fornecedor }}{% endif %}{% if filtro_data_inicio %}&data_inicio={{ filtro_data_inicio }}{% endif %}{% if filtro_data_fim %}&data_fim={{ filtro_data_fim }}{% endif %}"><i class="bi bi-chevron-double-left"></i></a>
+    <a href="?page={{ page_obj.previous_page_number }}{% if busca %}&busca={{ busca }}{% endif %}{% if filtro_fornecedor %}&fornecedor={{ filtro_fornecedor }}{% endif %}{% if filtro_data_inicio %}&data_inicio={{ filtro_data_inicio }}{% endif %}{% if filtro_data_fim %}&data_fim={{ filtro_data_fim }}{% endif %}"><i class="bi bi-chevron-left"></i></a>
+    {% endif %}
+    <span class="active">{{ page_obj.number }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if busca %}&busca={{ busca }}{% endif %}{% if filtro_fornecedor %}&fornecedor={{ filtro_fornecedor }}{% endif %}{% if filtro_data_inicio %}&data_inicio={{ filtro_data_inicio }}{% endif %}{% if filtro_data_fim %}&data_fim={{ filtro_data_fim }}{% endif %}"><i class="bi bi-chevron-right"></i></a>
+    <a href="?page={{ page_obj.paginator.num_pages }}{% if busca %}&busca={{ busca }}{% endif %}{% if filtro_fornecedor %}&fornecedor={{ filtro_fornecedor }}{% endif %}{% if filtro_data_inicio %}&data_inicio={{ filtro_data_inicio }}{% endif %}{% if filtro_data_fim %}&data_fim={{ filtro_data_fim }}{% endif %}"><i class="bi bi-chevron-double-right"></i></a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

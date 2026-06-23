@@ -1,3 +1,6 @@
+from datetime import date
+from dateutil.relativedelta import relativedelta
+
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
@@ -263,4 +266,77 @@ class Notificacao(models.Model):
         return f'[{self.get_tipo_display()}] {self.mensagem[:60]}'
 
 
+class Compra(models.Model):
+    numero_nf = models.CharField(max_length=50, unique=True, verbose_name='Nº Nota Fiscal')
+    serie = models.CharField(max_length=20, blank=True, verbose_name='Série')
+    fornecedor_nome = models.CharField(max_length=255, verbose_name='Fornecedor')
+    fornecedor_cnpj = models.CharField(max_length=18, blank=True, verbose_name='CNPJ')
+    data_compra = models.DateField(verbose_name='Data da Compra')
+    valor_total = models.DecimalField(max_digits=12, decimal_places=2, verbose_name='Valor Total')
+    arquivo_nf = models.FileField(
+        upload_to='compras/nf/', blank=True, null=True,
+        verbose_name='Arquivo NF (PDF/XML)',
+    )
+    observacoes = models.TextField(blank=True, verbose_name='Observações')
+    criado_em = models.DateTimeField(auto_now_add=True, verbose_name='Criado em')
+    atualizado_em = models.DateTimeField(auto_now=True, verbose_name='Atualizado em')
+
+    class Meta:
+        verbose_name = 'Compra'
+        verbose_name_plural = 'Compras'
+        ordering = ['-data_compra']
+
+    def __str__(self):
+        return f'NF {self.numero_nf} - {self.fornecedor_nome} ({self.data_compra})'
+
+
+class ItemCompra(models.Model):
+    compra = models.ForeignKey(
+        Compra, on_delete=models.CASCADE,
+        related_name='itens', verbose_name='Compra',
+    )
+    equipamento = models.ForeignKey(
+        Equipamento, on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='itens_compra', verbose_name='Equipamento',
+    )
+    descricao = models.CharField(max_length=255, verbose_name='Descrição')
+    numero_serie = models.CharField(max_length=100, blank=True, verbose_name='Nº de Série')
+    patrimonio = models.CharField(max_length=100, blank=True, verbose_name='Nº Patrimônio')
+    valor_unitario = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Valor Unitário')
+    quantidade = models.IntegerField(default=1, verbose_name='Quantidade')
+    meses_garantia = models.IntegerField(default=0, verbose_name='Garantia (meses)')
+    meses_vida_util = models.IntegerField(default=0, verbose_name='Vida Útil (meses)')
+    data_fim_garantia = models.DateField(null=True, blank=True, verbose_name='Fim da Garantia')
+    data_fim_depreciacao = models.DateField(null=True, blank=True, verbose_name='Fim da Depreciação')
+
+    class Meta:
+        verbose_name = 'Item da Compra'
+        verbose_name_plural = 'Itens da Compra'
+
+    def __str__(self):
+        return f'{self.descricao} - NF {self.compra.numero_nf}'
+
+    def save(self, *args, **kwargs):
+        if self.compra_id and self.meses_garantia:
+            self.data_fim_garantia = self.compra.data_compra + relativedelta(months=self.meses_garantia)
+        if self.compra_id and self.meses_vida_util:
+            self.data_fim_depreciacao = self.compra.data_compra + relativedelta(months=self.meses_vida_util)
+        super().save(*args, **kwargs)
+
+    @property
+    def status_garantia(self):
+        if not self.data_fim_garantia:
+            return ''
+        return 'Em Garantia' if date.today() <= self.data_fim_garantia else 'Fora de Garantia'
+
+    @property
+    def status_depreciacao(self):
+        if not self.data_fim_depreciacao:
+            return ''
+        return 'Em Depreciação' if date.today() <= self.data_fim_depreciacao else 'Depreciado'
+
+    @property
+    def valor_total_item(self):
+        return self.valor_unitario * self.quantidade
 

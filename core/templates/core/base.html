@@ -65,6 +65,10 @@
             <i class="bi bi-tools sidebar__icon"></i>
             <span class="sidebar__label">Manutenções</span>
           </a>
+          <a href="{% url 'listar-compras' %}" class="sidebar__item {% if 'compra' in request.resolver_match.url_name %}sidebar__item--active{% endif %}">
+            <i class="bi bi-receipt sidebar__icon"></i>
+            <span class="sidebar__label">Compras / NF</span>
+          </a>
           <a href="{% url 'listar-estoque' %}" class="sidebar__item {% if request.resolver_match.url_name == 'listar-estoque' or request.resolver_match.url_name == 'criar-item-estoque' or request.resolver_match.url_name == 'editar-item-estoque' %}sidebar__item--active{% endif %}">
             <i class="bi bi-box-seam sidebar__icon"></i>
             <span class="sidebar__label">Estoque</span>

@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<form method="GET" class="filter-bar">
+<form method="GET" class="filter-bar" style="flex-wrap: wrap;">
   <div class="search-input-wrap">
     <i class="bi bi-search"></i>
     <input type="text" name="busca" class="form-control-custom" placeholder="Buscar por imobilizado, modelo, marca..." value="{{ busca }}">
@@ -32,6 +32,25 @@
     <option value="{{ e.pk }}" {% if filtro_empresa|stringformat:"s" == e.pk|stringformat:"s" %}selected{% endif %}>{{ e.nome }}</option>
     {% endfor %}
   </select>
+  <select name="garantia" class="form-control-custom filter-select">
+    <option value="">Garantia</option>
+    <option value="em_garantia" {% if filtro_garantia == 'em_garantia' %}selected{% endif %}>Em Garantia</option>
+    <option value="fora_garantia" {% if filtro_garantia == 'fora_garantia' %}selected{% endif %}>Fora de Garantia</option>
+    <option value="proximo_vencer" {% if filtro_garantia == 'proximo_vencer' %}selected{% endif %}>Próximo de Vencer</option>
+  </select>
+  <select name="depreciacao" class="form-control-custom filter-select">
+    <option value="">Depreciação</option>
+    <option value="em_depreciacao" {% if filtro_depreciacao == 'em_depreciacao' %}selected{% endif %}>Em Depreciação</option>
+    <option value="depreciado" {% if filtro_depreciacao == 'depreciado' %}selected{% endif %}>Depreciado</option>
+  </select>
+  <select name="fornecedor" class="form-control-custom filter-select">
+    <option value="">Fornecedor</option>
+    {% for f in fornecedores %}
+    <option value="{{ f }}" {% if filtro_fornecedor == f %}selected{% endif %}>{{ f }}</option>
+    {% endfor %}
+  </select>
+  <input type="date" name="compra_inicio" class="form-control-custom filter-select" value="{{ filtro_compra_inicio }}" placeholder="Compra início">
+  <input type="date" name="compra_fim" class="form-control-custom filter-select" value="{{ filtro_compra_fim }}" placeholder="Compra fim">
   <button type="submit" class="btn-primary-custom"><i class="bi bi-funnel"></i> Filtrar</button>
 </form>
 

@@ -128,6 +128,76 @@
       </div>
     </div>
 
+    {% if itens_compra %}
+    <div class="card mb-3">
+      <div class="card-header-custom">
+        <span style="font-size: 13px; font-weight: 600;">Dados da Compra</span>
+      </div>
+      <div class="card-body-custom">
+        {% for ic in itens_compra %}
+        <div class="detail-grid">
+          <div class="detail-field">
+            <div class="detail-field__label">NF / Fornecedor</div>
+            <div class="detail-field__value">
+              <a href="{% url 'detalhe-compra' ic.compra.pk %}" style="color: var(--accent);">{{ ic.compra.numero_nf }}</a>
+              — {{ ic.compra.fornecedor_nome }}
+            </div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Data da Compra</div>
+            <div class="detail-field__value muted">{{ ic.compra.data_compra|date:"d/m/Y" }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Valor de Compra</div>
+            <div class="detail-field__value muted">R$ {{ ic.valor_unitario|floatformat:2 }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Garantia</div>
+            <div class="detail-field__value muted">{{ ic.meses_garantia }} meses</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Fim da Garantia</div>
+            <div class="detail-field__value muted">{{ ic.data_fim_garantia|date:"d/m/Y"|default:"—" }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Situação</div>
+            <div class="detail-field__value">
+              {% if ic.data_fim_garantia %}
+              <span class="badge-status {% if ic.status_garantia == 'Em Garantia' %}status-ok{% else %}status-expired{% endif %}">{{ ic.status_garantia }}</span>
+              {% else %}—{% endif %}
+            </div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Depreciação</div>
+            <div class="detail-field__value muted">{{ ic.meses_vida_util }} meses</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Fim Depreciação</div>
+            <div class="detail-field__value muted">{{ ic.data_fim_depreciacao|date:"d/m/Y"|default:"—" }}</div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Situação</div>
+            <div class="detail-field__value">
+              {% if ic.data_fim_depreciacao %}
+              <span class="badge-status {% if ic.status_depreciacao == 'Em Depreciação' %}status-ok{% else %}status-expired{% endif %}">{{ ic.status_depreciacao }}</span>
+              {% else %}—{% endif %}
+            </div>
+          </div>
+          <div class="detail-field">
+            <div class="detail-field__label">Arquivo NF</div>
+            <div class="detail-field__value">
+              {% if ic.compra.arquivo_nf %}
+              <a href="{{ ic.compra.arquivo_nf.url }}" target="_blank" class="btn-secondary-custom btn-sm-custom"><i class="bi bi-file-earmark-text"></i> NF</a>
+              {% else %}—{% endif %}
+            </div>
+          </div>
+        </div>
+        {% if not forloop.last %}<hr style="margin: 12px 0; border-color: var(--card-border);">{% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
     <div class="card mb-3">
       <div class="card-header-custom">
         <span style="font-size: 13px; font-weight: 600;">Financeiro</span>

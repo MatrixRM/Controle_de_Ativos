@@ -1,0 +1,22 @@
+{% extends 'core/base.html' %}
+{% block title %}Excluir Item — Controle de Ativos{% endblock %}
+{% block page_title %}Confirmar Exclusão{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 500px; margin: 0 auto;">
+  <div class="card-body-custom" style="text-align: center; padding: 40px;">
+    <i class="bi bi-exclamation-triangle" style="font-size: 48px; color: #dc2626; margin-bottom: 16px; display: block;"></i>
+    <h3 style="margin: 0 0 8px;">Excluir Item</h3>
+    <p style="color: var(--text-muted); margin: 0 0 24px;">
+      Tem certeza que deseja excluir o item <strong>{{ item.descricao }}</strong>?
+    </p>
+    <form method="POST">
+      {% csrf_token %}
+      <div style="display: flex; gap: 8px; justify-content: center;">
+        <button type="submit" class="btn-danger-custom"><i class="bi bi-trash"></i> Sim, Excluir</button>
+        <a href="{% url 'detalhe-compra' item.compra.pk %}" class="btn-secondary-custom"><i class="bi bi-x-lg"></i> Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Empresa, Equipamento, Manutencao, ItemEstoque, MovimentacaoEstoque, Notificacao
+from .models import Empresa, Equipamento, Manutencao, ItemEstoque, MovimentacaoEstoque, Notificacao, Compra, ItemCompra
 
 
 @admin.register(Empresa)
@@ -49,6 +49,20 @@ class NotificacaoAdmin(admin.ModelAdmin):
     search_fields = ['mensagem']
     date_hierarchy = 'criado_em'
     readonly_fields = ['criado_em']
+
+
+class ItemCompraInline(admin.TabularInline):
+    model = ItemCompra
+    extra = 1
+
+
+@admin.register(Compra)
+class CompraAdmin(admin.ModelAdmin):
+    list_display = ['numero_nf', 'fornecedor_nome', 'data_compra', 'valor_total']
+    list_filter = ['data_compra']
+    search_fields = ['numero_nf', 'fornecedor_nome', 'fornecedor_cnpj']
+    date_hierarchy = 'data_compra'
+    inlines = [ItemCompraInline]
 
 
 

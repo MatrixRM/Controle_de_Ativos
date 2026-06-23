@@ -1,0 +1,51 @@
+{% extends 'core/base.html' %}
+{% block title %}{% if editando %}Editar{% else %}Nova{% endif %} Compra — Controle de Ativos{% endblock %}
+{% block page_title %}{% if editando %}Editar Compra{% else %}Nova Compra{% endif %}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 720px;">
+  <div class="card-body-custom">
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Nº Nota Fiscal</label>
+          {{ form.numero_nf }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Série</label>
+          {{ form.serie }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fornecedor</label>
+          {{ form.fornecedor_nome }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">CNPJ</label>
+          {{ form.fornecedor_cnpj }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data da Compra</label>
+          {{ form.data_compra }}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor Total (R$)</label>
+          {{ form.valor_total }}
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label class="form-label">Arquivo NF (PDF/XML)</label>
+          {{ form.arquivo_nf }}
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label class="form-label">Observações</label>
+          {{ form.observacoes }}
+        </div>
+      </div>
+      <div style="display: flex; gap: 8px; margin-top: 20px;">
+        <button type="submit" class="btn-primary-custom"><i class="bi bi-check-lg"></i> Salvar</button>
+        <a href="{% url 'listar-compras' %}" class="btn-secondary-custom"><i class="bi bi-x-lg"></i> Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

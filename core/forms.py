@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from .models import Empresa, Equipamento, Manutencao, ItemEstoque, MovimentacaoEstoque
+from .models import Compra, Empresa, Equipamento, ItemCompra, Manutencao, ItemEstoque, MovimentacaoEstoque
 
 User = get_user_model()
 
@@ -129,3 +129,40 @@ class MovimentacaoEstoqueForm(forms.ModelForm):
                     'A empresa de origem e destino devem ser diferentes.'
                 )
         return cleaned_data
+
+
+class CompraForm(forms.ModelForm):
+    class Meta:
+        model = Compra
+        exclude = ['criado_em', 'atualizado_em']
+        widgets = {
+            'numero_nf': forms.TextInput(attrs={'class': 'form-control-custom'}),
+            'serie': forms.TextInput(attrs={'class': 'form-control-custom'}),
+            'fornecedor_nome': forms.TextInput(attrs={'class': 'form-control-custom'}),
+            'fornecedor_cnpj': forms.TextInput(attrs={'class': 'form-control-custom', 'placeholder': '00.000.000/0000-00'}),
+            'data_compra': forms.DateInput(attrs={'class': 'form-control-custom', 'type': 'date'}),
+            'valor_total': forms.NumberInput(attrs={'class': 'form-control-custom', 'step': '0.01'}),
+            'arquivo_nf': forms.FileInput(attrs={'class': 'form-control-custom'}),
+            'observacoes': forms.Textarea(attrs={'class': 'form-control-custom', 'rows': 3}),
+        }
+
+
+class ItemCompraForm(forms.ModelForm):
+    class Meta:
+        model = ItemCompra
+        exclude = ['compra', 'data_fim_garantia', 'data_fim_depreciacao']
+        widgets = {
+            'equipamento': forms.Select(attrs={'class': 'form-control-custom'}),
+            'descricao': forms.TextInput(attrs={'class': 'form-control-custom'}),
+            'numero_serie': forms.TextInput(attrs={'class': 'form-control-custom'}),
+            'patrimonio': forms.TextInput(attrs={'class': 'form-control-custom'}),
+            'valor_unitario': forms.NumberInput(attrs={'class': 'form-control-custom', 'step': '0.01'}),
+            'quantidade': forms.NumberInput(attrs={'class': 'form-control-custom'}),
+            'meses_garantia': forms.NumberInput(attrs={'class': 'form-control-custom'}),
+            'meses_vida_util': forms.NumberInput(attrs={'class': 'form-control-custom'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['equipamento'].required = False
+        self.fields['equipamento'].queryset = Equipamento.objects.all().order_by('numero_imobilizado')
