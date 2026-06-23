@@ -532,11 +532,11 @@ def _sanitizar_ad(texto):
     return texto
 
 
-def _gerar_login_ad(nome, sobrenome):
+def _gerar_login_ad(nome, ultimo_sobrenome):
     n = _sanitizar_ad(nome)
-    s = _sanitizar_ad(sobrenome).replace(" ", "")
-    login = f"{n}.{s}"[:20] if n and s else n[:20]
-    return login
+    s = _sanitizar_ad(ultimo_sobrenome)
+    login = f"{n}.{s}"[:20]
+    return login.rstrip('.')
 
 
 def _resolver_ou_ad(empresa_raw, filial_raw):
@@ -571,23 +571,24 @@ def _executar_criar_usuario_ad(texto):
     empresa = m.group(2).strip().lower()
     filial = (m.group(3) or '').strip()
 
-    partes = nome_completo.split(maxsplit=1)
+    partes = nome_completo.split()
     nome = partes[0]
-    sobrenome = partes[1] if len(partes) > 1 else nome
+    ultimo_sobrenome = partes[-1] if len(partes) > 1 else nome
 
     ou, erro = _resolver_ou_ad(empresa, filial)
     if erro:
         return erro
 
-    login = _gerar_login_ad(nome, sobrenome)
-    nome_display = f"{nome} {sobrenome}".strip()
+    login = _gerar_login_ad(nome, ultimo_sobrenome)
+    nome_display = nome_completo
     senha = settings.AD_DEFAULT_PASSWORD or "Altere@2026"
 
     ps_cmd = (
         f"New-ADUser "
         f"-Name '{nome_display}' "
+        f"-DisplayName '{nome_display}' "
         f"-GivenName '{nome}' "
-        f"-Surname '{sobrenome}' "
+        f"-Surname '{ultimo_sobrenome}' "
         f"-SamAccountName '{login}' "
         f"-UserPrincipalName '{login}@grupocarboni.local' "
         f"-Path '{ou}' "
